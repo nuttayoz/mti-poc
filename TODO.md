@@ -64,72 +64,74 @@ Gmail label: SDG/Processed or SDG/Failed
 
 ## Phase 3: Gmail Integration
 
-- [ ] Build `GmailModule`.
+- [x] Build `GmailModule`.
 - [x] Build `GoogleAuthService`.
 - [ ] Authenticate with Gmail API.
-- [ ] Search messages with label `SDG/Process`.
-- [ ] Exclude already processed messages.
-- [ ] Fetch full message details.
-- [ ] Detect attachments.
-- [ ] Download attachment bytes.
-- [ ] Extract useful metadata:
-  - [ ] Gmail message ID
-  - [ ] sender
-  - [ ] subject
-  - [ ] received date
-  - [ ] attachment filename
-  - [ ] MIME type
-- [ ] Move message from `SDG/Process` to `SDG/Processing` before processing.
-- [ ] Move successful messages to `SDG/Processed`.
-- [ ] Move failed messages to `SDG/Failed`.
-- [ ] Optionally archive successful messages.
+- [x] Search messages with label `SDG/Process`.
+- [x] Exclude already processed messages.
+- [x] Fetch full message details.
+- [x] Detect attachments.
+- [x] Download attachment bytes.
+- [x] Extract useful metadata:
+  - [x] Gmail message ID
+  - [x] sender
+  - [x] subject
+  - [x] received date
+  - [x] attachment filename
+  - [x] MIME type
+- [x] Move message from `SDG/Process` to `SDG/Processing` before processing.
+- [x] Move successful messages to `SDG/Processed`.
+- [x] Move failed messages to `SDG/Failed`.
+- [x] Optionally archive successful messages.
 
 ## Phase 4: Google Drive Integration
 
-- [ ] Build `DriveModule`.
+- [x] Build `DriveModule`.
 - [ ] Authenticate with Drive API.
-- [ ] Configure destination folder ID with environment variable.
-- [ ] Upload a file to Google Drive.
-- [ ] Set uploaded file name.
-- [ ] Set uploaded file MIME type.
-- [ ] Return Drive file ID and link.
+- [x] Configure destination folder ID with environment variable.
+- [x] Upload a file to Google Drive.
+- [x] Set uploaded file name.
+- [x] Set uploaded file MIME type.
+- [x] Return Drive file ID and link.
 - [ ] Add folder validation during startup.
 
 ## Phase 5: Document Processing MVP
 
-- [ ] Build `DocumentsModule`.
-- [ ] Define `DocumentInput` type.
-- [ ] Define `ProcessedDocument` type.
-- [ ] Define `DocumentProcessor` interface.
-- [ ] Implement a pass-through processor first.
-- [ ] Generate standardized output filenames.
-- [ ] Preserve original file extension for pass-through mode.
-- [ ] Add simple file type allowlist.
-- [ ] Skip unsupported file types gracefully.
+- [x] Build `DocumentsModule`.
+- [x] Define `DocumentInput` type.
+- [x] Define `ProcessedDocument` type.
+- [x] Define `DocumentProcessor` interface.
+- [x] Implement a pass-through processor first.
+- [x] Implement mock external transformation processor.
+- [x] Add processor mode selection.
+- [x] Generate standardized output filenames.
+- [x] Preserve original file extension for pass-through mode.
+- [x] Add simple file type allowlist.
+- [x] Skip unsupported file types gracefully.
 
 ## Phase 6: Scheduled Gateway Job
 
-- [ ] Build `DocumentGatewayJob`.
-- [ ] Run the job on a configurable interval.
-- [ ] Limit number of messages processed per run.
-- [ ] Process attachments one message at a time.
-- [ ] Catch per-message errors without stopping the whole run.
-- [ ] Add clear logs for:
-  - [ ] messages found
-  - [ ] attachments downloaded
-  - [ ] files uploaded
-  - [ ] skipped files
-  - [ ] failed messages
-- [ ] Prevent duplicate runs from overlapping.
+- [x] Build `DocumentGatewayJob`.
+- [x] Run the job on a configurable interval.
+- [x] Limit number of messages processed per run.
+- [x] Process attachments one message at a time.
+- [x] Catch per-message errors without stopping the whole run.
+- [x] Add clear logs for:
+  - [x] messages found
+  - [x] attachments downloaded
+  - [x] files uploaded
+  - [x] skipped files
+  - [x] failed messages
+- [x] Prevent duplicate runs from overlapping.
 
 ## Phase 7: Reliability Without a Database
 
-- [ ] Use Gmail labels as state transitions.
+- [x] Use Gmail labels as state transitions.
 - [ ] Treat `SDG/Processing` messages as recoverable stuck work.
 - [ ] Add a manual recovery command or endpoint for stuck messages.
-- [ ] Make upload filenames deterministic where possible.
-- [ ] Include Gmail message ID in Drive file metadata or description.
-- [ ] Avoid logging attachment contents or sensitive document text.
+- [x] Make upload filenames deterministic where possible.
+- [x] Include Gmail message ID in Drive file metadata or description.
+- [x] Avoid logging attachment contents or sensitive document text.
 
 ## Phase 8: Configuration
 
@@ -160,9 +162,9 @@ Gmail label: SDG/Processed or SDG/Failed
 
 ## Phase 10: Next Improvements
 
-- [ ] Add OCR processor for receipt images.
-- [ ] Add PDF conversion for supported document types.
-- [ ] Add AI summarization processor for email body or text files.
+- [ ] Replace mock external processor with real third-party transform API.
+- [ ] Add transform API retries and timeout configuration.
+- [ ] Store transform provider request IDs in Drive metadata or description.
 - [ ] Add per-sender routing rules.
 - [ ] Add per-label destination folders.
 - [ ] Add a small dashboard for processed counts and failures.

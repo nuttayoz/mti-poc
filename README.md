@@ -20,10 +20,13 @@ The app is a runnable service skeleton with Google OAuth foundation:
 - Environment configuration service
 - JSON logger
 - `/health` endpoint
-- Scheduled document gateway job placeholder
+- Scheduled document gateway job
 - Google OAuth URL, callback, token storage, and status endpoints
+- Gmail module skeleton for labels, message search, attachment download, and state transitions
+- Drive module skeleton for destination folder validation and file upload
+- Documents module with pass-through processing and standardized filenames
 
-Gmail, Drive, and document processing integrations are planned next.
+Live Gmail and Drive API verification is waiting for Google OAuth authorization.
 
 ## Requirements
 
@@ -88,6 +91,8 @@ After Google redirects back to the app, tokens are stored at:
 
 This file is ignored by git.
 
+Until tokens exist, the scheduled job runs safely in a dry shape: it logs that Google OAuth is not ready and skips live Gmail/Drive work.
+
 ## Useful Scripts
 
 ```bash
@@ -121,9 +126,14 @@ Important early values:
 - `MAX_MESSAGES_PER_RUN`: future cap for Gmail messages processed per run.
 - `RUN_JOB_ON_STARTUP`: whether to run the scheduled job immediately on boot.
 - `ARCHIVE_AFTER_SUCCESS`: future option to archive Gmail messages after successful processing.
+- `DOCUMENT_PROCESSOR_MODE`: `mock-external` by default, or `passthrough`.
+
+## Document Transformation
+
+This repo does not implement OCR, PDF conversion, AI extraction, or report generation directly. It prepares the gateway boundary for an external transformation service.
+
+The current default is a mock external processor. See [docs/external-transform-service.md](docs/external-transform-service.md).
 
 ## Next Step
 
-The next phase is Google API setup, followed by the Gmail integration module.
-
-Use [docs/google-cloud-setup.md](docs/google-cloud-setup.md) to create the Google Cloud project, OAuth client, scopes, Drive folder, and Gmail labels.
+When Google OAuth is available, authorize the app with `/oauth/google/start`, then run the first live Gmail/Drive API test.

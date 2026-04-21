@@ -26,6 +26,26 @@ export class AppConfigService {
     return this.booleanFromEnv('ARCHIVE_AFTER_SUCCESS', true);
   }
 
+  get documentProcessorMode(): 'mock-external' | 'passthrough' {
+    const mode = process.env.DOCUMENT_PROCESSOR_MODE ?? 'mock-external';
+
+    if (mode === 'passthrough' || mode === 'mock-external') {
+      return mode;
+    }
+
+    return 'mock-external';
+  }
+
+  get externalTransformApi(): {
+    apiKey: string;
+    url: string;
+  } {
+    return {
+      apiKey: process.env.EXTERNAL_TRANSFORM_API_KEY ?? '',
+      url: process.env.EXTERNAL_TRANSFORM_API_URL ?? '',
+    };
+  }
+
   get gmailLabels(): {
     input: string;
     processing: string;

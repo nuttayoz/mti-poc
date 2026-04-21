@@ -1,6 +1,15 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { JsonLogger } from '../common/logging/json-logger.service';
 import { AppConfigService } from '../config/app-config.service';
+import { DocumentProcessor } from '../documents/document-processor.interface';
+import { DOCUMENT_PROCESSOR } from '../documents/document.tokens';
+import { DocumentInput } from '../documents/document.types';
+import { DriveService } from '../drive/drive.service';
+import { GmailService } from '../gmail/gmail.service';
+import {
+  GmailAttachment,
+  GmailProcessableMessage,
+} from '../gmail/gmail.types';
 
 @Injectable()
 export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
@@ -9,7 +18,11 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly config: AppConfigService,
+    private readonly driveService: DriveService,
+    private readonly gmailService: GmailService,
     private readonly logger: JsonLogger,
+    @Inject(DOCUMENT_PROCESSOR)
+    private readonly documentProcessor: DocumentProcessor,
   ) {}
 
   onModuleInit(): void {
@@ -66,13 +79,14 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
     );
 
     try {
-      await this.runPlaceholder();
+      const summary = await this.runGateway();
 
       this.logger.log(
         {
           durationMs: Date.now() - startedAt,
           event: 'job.completed',
           job: 'document-gateway',
+          summary,
         },
         DocumentGatewayJob.name,
       );
@@ -91,15 +105,200 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async runPlaceholder(): Promise<void> {
+  private async runGateway(): Promise<{
+    attachmentsProcessed: number;
+    attachmentsSkipped: number;
+    messagesFailed: number;
+    messagesFound: number;
+    messagesProcessed: number;
+  }> {
+    const gmailReady = await this.gmailService.isReady();
+    const driveReady = await this.driveService.isReady();
+
+    if (!gmailReady || !driveReady) {
+      this.logger.warn(
+        {
+          driveReady,
+          event: 'job.dry_run',
+          gmailReady,
+          job: 'document-gateway',
+          reason: 'google_oauth_tokens_or_drive_folder_not_ready',
+        },
+        DocumentGatewayJob.name,
+      );
+    }
+
+    await this.gmailService.listLabels();
+    await this.driveService.validateDestinationFolder();
+
+    const messages = await this.gmailService.findProcessableMessages();
+    const summary = {
+      attachmentsProcessed: 0,
+      attachmentsSkipped: 0,
+      messagesFailed: 0,
+      messagesFound: messages.length,
+      messagesProcessed: 0,
+    };
+
+    for (const message of messages) {
+      try {
+        await this.processMessage(message, summary);
+      } catch (error) {
+        summary.messagesFailed += 1;
+
+        this.logger.error(
+          {
+            error,
+            event: 'job.message_failed',
+            job: 'document-gateway',
+            messageId: message.id,
+          },
+          undefined,
+          DocumentGatewayJob.name,
+        );
+
+        await this.gmailService.moveToFailed(message.id);
+      }
+    }
+
+    return summary;
+  }
+
+  private async processMessage(
+    message: GmailProcessableMessage,
+    summary: {
+      attachmentsProcessed: number;
+      attachmentsSkipped: number;
+      messagesProcessed: number;
+    },
+  ): Promise<void> {
     this.logger.log(
       {
-        event: 'job.noop',
+        attachmentCount: message.attachments.length,
+        event: 'job.message_started',
         job: 'document-gateway',
-        message:
-          'Gmail, Drive, and document processor integrations are not implemented yet.',
+        messageId: message.id,
+        subject: message.subject,
       },
       DocumentGatewayJob.name,
     );
+
+    await this.gmailService.moveToProcessing(message.id);
+
+    for (const attachment of message.attachments) {
+      const processed = await this.processAttachment(message, attachment);
+
+      if (processed) {
+        summary.attachmentsProcessed += 1;
+      } else {
+        summary.attachmentsSkipped += 1;
+      }
+    }
+
+    await this.gmailService.moveToProcessed(message.id);
+
+    if (this.config.archiveAfterSuccess) {
+      await this.gmailService.archive(message.id);
+    }
+
+    summary.messagesProcessed += 1;
+  }
+
+  private async processAttachment(
+    message: GmailProcessableMessage,
+    attachment: GmailAttachment,
+  ): Promise<boolean> {
+    if (!this.documentProcessor.supports(attachment)) {
+      this.logger.warn(
+        {
+          event: 'job.attachment_skipped',
+          filename: attachment.filename,
+          job: 'document-gateway',
+          messageId: message.id,
+          mimeType: attachment.mimeType,
+          reason: 'unsupported_file_type',
+        },
+        DocumentGatewayJob.name,
+      );
+      return false;
+    }
+
+    const downloadedAttachment = await this.gmailService.downloadAttachment(
+      message,
+      attachment,
+    );
+
+    this.logger.log(
+      {
+        byteLength: downloadedAttachment.buffer.byteLength,
+        event: 'job.attachment_downloaded',
+        filename: attachment.filename,
+        job: 'document-gateway',
+        messageId: message.id,
+        mimeType: attachment.mimeType,
+      },
+      DocumentGatewayJob.name,
+    );
+
+    const documentInput: DocumentInput = {
+      buffer: downloadedAttachment.buffer,
+      filename: downloadedAttachment.filename,
+      gmailMessageId: message.id,
+      mimeType: downloadedAttachment.mimeType,
+      receivedAt: downloadedAttachment.receivedAt,
+      sender: downloadedAttachment.sender,
+      subject: downloadedAttachment.subject,
+    };
+    const processedDocument = await this.documentProcessor.process(documentInput);
+    const uploadResult = await this.driveService.uploadFile({
+      buffer: processedDocument.buffer,
+      description: this.buildDriveDescription(processedDocument),
+      filename: processedDocument.filename,
+      mimeType: processedDocument.mimeType,
+    });
+
+    this.logger.log(
+      {
+        driveFileId: uploadResult.id,
+        event: 'job.attachment_processed',
+        job: 'document-gateway',
+        messageId: message.id,
+        outputFilename: uploadResult.name,
+        sourceFilename: attachment.filename,
+      },
+      DocumentGatewayJob.name,
+    );
+
+    return true;
+  }
+
+  private buildDriveDescription(processedDocument: {
+    source: {
+      filename: string;
+      gmailMessageId: string;
+      mimeType: string;
+    };
+    transform?: {
+      mode: string;
+      provider?: string;
+    };
+  }): string {
+    const description = [
+      `Source Gmail message ID: ${processedDocument.source.gmailMessageId}`,
+      `Source filename: ${processedDocument.source.filename}`,
+      `Source MIME type: ${processedDocument.source.mimeType}`,
+    ];
+
+    if (processedDocument.transform) {
+      description.push(`Transform mode: ${processedDocument.transform.mode}`);
+
+      if (processedDocument.transform.provider) {
+        description.push(
+          `Transform provider: ${processedDocument.transform.provider}`,
+        );
+      }
+    }
+
+    return description.join('\n');
   }
 }
