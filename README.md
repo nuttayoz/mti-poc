@@ -122,6 +122,8 @@ The app reads configuration from environment variables. See `.env.example` for t
 Important early values:
 
 - `PORT`: HTTP port for the NestJS service.
+- `LOG_FORMAT`: `pretty` for colored local logs or `json` for machine-readable logs.
+- `LOG_COLORS`: enable or disable ANSI colors for pretty logs.
 - `JOB_INTERVAL_MS`: how often the gateway job wakes up.
 - `MAX_MESSAGES_PER_RUN`: future cap for Gmail messages processed per run.
 - `RUN_JOB_ON_STARTUP`: whether to run the scheduled job immediately on boot.
