@@ -13,7 +13,7 @@ SDG/Process -> SDG/Processing -> SDG/Processed
 
 ## Current Status
 
-Phase 1 is a runnable service skeleton:
+The app is a runnable service skeleton with Google OAuth foundation:
 
 - Bun runtime and package manager
 - NestJS app structure
@@ -21,6 +21,7 @@ Phase 1 is a runnable service skeleton:
 - JSON logger
 - `/health` endpoint
 - Scheduled document gateway job placeholder
+- Google OAuth URL, callback, token storage, and status endpoints
 
 Gmail, Drive, and document processing integrations are planned next.
 
@@ -55,6 +56,37 @@ Check the health endpoint:
 ```bash
 curl http://localhost:3000/health
 ```
+
+## Google OAuth
+
+After `.env` contains your Google OAuth values, start the app on the same port configured in `GOOGLE_OAUTH_REDIRECT_URI`.
+
+For the default redirect URI, use port `3000`:
+
+```bash
+bun run build
+bun run start
+```
+
+Check OAuth readiness:
+
+```bash
+curl http://localhost:3000/oauth/google/status
+```
+
+Open this URL in your browser to connect your Google account:
+
+```text
+http://localhost:3000/oauth/google/start
+```
+
+After Google redirects back to the app, tokens are stored at:
+
+```text
+.tokens/google-oauth.json
+```
+
+This file is ignored by git.
 
 ## Useful Scripts
 

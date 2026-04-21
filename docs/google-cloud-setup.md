@@ -151,6 +151,56 @@ Later, the app can create missing labels automatically.
 - [ ] Drive folder ID is copied into `.env`.
 - [ ] Gmail labels are created.
 
+## 10. Authorize the Local App
+
+After `.env` is filled in, build and start the service:
+
+```bash
+bun run build
+bun run start
+```
+
+The app must run on the same port used in the OAuth redirect URI. With the default setup, that is port `3000`.
+
+Check OAuth status:
+
+```bash
+curl http://localhost:3000/oauth/google/status
+```
+
+Start OAuth in your browser:
+
+```text
+http://localhost:3000/oauth/google/start
+```
+
+Google will redirect back to:
+
+```text
+http://localhost:3000/oauth/google/callback
+```
+
+After a successful callback, the app stores tokens at:
+
+```text
+.tokens/google-oauth.json
+```
+
+Expected status after authorization:
+
+```json
+{
+  "configured": true,
+  "driveFolderConfigured": true,
+  "hasRefreshToken": true,
+  "tokenStored": true
+}
+```
+
+The response also includes the configured scopes and token storage path.
+
+If Google returns `redirect_uri_mismatch`, update either the Google Cloud OAuth client redirect URI or `GOOGLE_OAUTH_REDIRECT_URI` so they match exactly.
+
 ## Official References
 
 - Gmail API Node.js quickstart: https://developers.google.com/workspace/gmail/api/quickstart/nodejs

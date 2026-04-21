@@ -47,24 +47,25 @@ Gmail label: SDG/Processed or SDG/Failed
 ## Phase 2: Google API Setup
 
 - [x] Add Google Cloud setup guide.
-- [ ] Create Google Cloud project.
-- [ ] Enable Gmail API.
-- [ ] Enable Google Drive API.
-- [ ] Configure OAuth consent screen.
-- [ ] Create OAuth credentials.
-- [ ] Decide where local OAuth tokens will be stored for MVP.
-- [ ] Add required Gmail scopes.
-- [ ] Add required Drive scopes.
-- [ ] Create Gmail labels:
-  - [ ] `SDG/Process`
-  - [ ] `SDG/Processing`
-  - [ ] `SDG/Processed`
-  - [ ] `SDG/Failed`
+- [x] Create Google Cloud project.
+- [x] Enable Gmail API.
+- [x] Enable Google Drive API.
+- [x] Configure OAuth consent screen.
+- [x] Create OAuth credentials.
+- [x] Decide where local OAuth tokens will be stored for MVP.
+- [x] Add required Gmail scopes.
+- [x] Add required Drive scopes.
+- [x] Add Google OAuth endpoints.
+- [x] Create Gmail labels:
+  - [x] `SDG/Process`
+  - [x] `SDG/Processing`
+  - [x] `SDG/Processed`
+  - [x] `SDG/Failed`
 
 ## Phase 3: Gmail Integration
 
 - [ ] Build `GmailModule`.
-- [ ] Build `GoogleAuthService`.
+- [x] Build `GoogleAuthService`.
 - [ ] Authenticate with Gmail API.
 - [ ] Search messages with label `SDG/Process`.
 - [ ] Exclude already processed messages.
@@ -133,19 +134,19 @@ Gmail label: SDG/Processed or SDG/Failed
 ## Phase 8: Configuration
 
 - [x] Add `.env.example`.
-- [ ] Add configuration for:
-  - [ ] Google OAuth client ID
-  - [ ] Google OAuth client secret
-  - [ ] Google OAuth redirect URI
-  - [ ] Google token storage path
-  - [ ] Google Drive destination folder ID
-  - [ ] Gmail input label
-  - [ ] Gmail processing label
-  - [ ] Gmail processed label
-  - [ ] Gmail failed label
-  - [ ] job interval
-  - [ ] max messages per run
-  - [ ] archive after success
+- [x] Add configuration for:
+  - [x] Google OAuth client ID
+  - [x] Google OAuth client secret
+  - [x] Google OAuth redirect URI
+  - [x] Google token storage path
+  - [x] Google Drive destination folder ID
+  - [x] Gmail input label
+  - [x] Gmail processing label
+  - [x] Gmail processed label
+  - [x] Gmail failed label
+  - [x] job interval
+  - [x] max messages per run
+  - [x] archive after success
 
 ## Phase 9: First Manual Test
 
