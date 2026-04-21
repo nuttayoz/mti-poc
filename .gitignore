@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.tokens
+credentials.json
+client_secret*.json
+*.log
+*.tsbuildinfo
+.DS_Store
