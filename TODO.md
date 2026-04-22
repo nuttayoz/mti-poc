@@ -61,6 +61,7 @@ Gmail label: SDG/Processed or SDG/Failed
   - [x] `SDG/Processing`
   - [x] `SDG/Processed`
   - [x] `SDG/Failed`
+  - [x] `SDG/Skipped`
 
 ## Phase 3: Gmail Integration
 
@@ -82,6 +83,7 @@ Gmail label: SDG/Processed or SDG/Failed
 - [x] Move message from `SDG/Process` to `SDG/Processing` before processing.
 - [x] Move successful messages to `SDG/Processed`.
 - [x] Move failed messages to `SDG/Failed`.
+- [x] Move messages with no supported output to `SDG/Skipped`.
 - [x] Optionally archive successful messages.
 
 ## Phase 4: Google Drive Integration
@@ -150,6 +152,7 @@ Gmail label: SDG/Processed or SDG/Failed
   - [x] Gmail processing label
   - [x] Gmail processed label
   - [x] Gmail failed label
+  - [x] Gmail skipped label
   - [x] job interval
   - [x] max messages per run
   - [x] archive after success

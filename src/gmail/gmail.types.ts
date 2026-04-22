@@ -3,6 +3,7 @@ export interface GmailLabelSet {
   input: string;
   processed: string;
   processing: string;
+  skipped: string;
 }
 
 export interface GmailMessageSummary {

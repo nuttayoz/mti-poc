@@ -196,6 +196,7 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
       messagesFailed: 0,
       messagesFound: messages.length,
       messagesProcessed: 0,
+      messagesSkipped: 0,
     };
 
     for (const message of messages) {
@@ -228,6 +229,7 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
       attachmentsProcessed: number;
       attachmentsSkipped: number;
       messagesProcessed: number;
+      messagesSkipped: number;
     },
   ): Promise<void> {
     this.logger.log(
@@ -243,14 +245,39 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
 
     await this.gmailService.moveToProcessing(message.id);
 
+    let processedAttachments = 0;
+    let skippedAttachments = 0;
+
     for (const attachment of message.attachments) {
       const processed = await this.processAttachment(message, attachment);
 
       if (processed) {
+        processedAttachments += 1;
         summary.attachmentsProcessed += 1;
       } else {
+        skippedAttachments += 1;
         summary.attachmentsSkipped += 1;
       }
+    }
+
+    if (processedAttachments === 0) {
+      await this.gmailService.moveToSkipped(message.id);
+
+      summary.messagesSkipped += 1;
+
+      this.logger.warn(
+        {
+          attachmentsTotal: message.attachments.length,
+          event: 'job.message_skipped',
+          job: 'document-gateway',
+          messageId: message.id,
+          reason: 'no_supported_attachments',
+          skippedAttachments,
+        },
+        DocumentGatewayJob.name,
+      );
+
+      return;
     }
 
     await this.gmailService.moveToProcessed(message.id);

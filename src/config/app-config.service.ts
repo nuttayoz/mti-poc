@@ -62,15 +62,17 @@ export class AppConfigService {
 
   get gmailLabels(): {
     input: string;
-    processing: string;
-    processed: string;
     failed: string;
+    processed: string;
+    processing: string;
+    skipped: string;
   } {
     return {
       input: process.env.GMAIL_INPUT_LABEL ?? 'SDG/Process',
-      processing: process.env.GMAIL_PROCESSING_LABEL ?? 'SDG/Processing',
-      processed: process.env.GMAIL_PROCESSED_LABEL ?? 'SDG/Processed',
       failed: process.env.GMAIL_FAILED_LABEL ?? 'SDG/Failed',
+      processed: process.env.GMAIL_PROCESSED_LABEL ?? 'SDG/Processed',
+      processing: process.env.GMAIL_PROCESSING_LABEL ?? 'SDG/Processing',
+      skipped: process.env.GMAIL_SKIPPED_LABEL ?? 'SDG/Skipped',
     };
   }
 

@@ -75,6 +75,7 @@ export class GmailService {
           labels.processing,
           labels.processed,
           labels.failed,
+          labels.skipped,
         ])
       ).values(),
     );
@@ -156,6 +157,13 @@ export class GmailService {
   async moveToFailed(messageId: string): Promise<void> {
     await this.replaceLabels(messageId, {
       add: [this.config.gmailLabels.failed],
+      remove: [this.config.gmailLabels.processing],
+    });
+  }
+
+  async moveToSkipped(messageId: string): Promise<void> {
+    await this.replaceLabels(messageId, {
+      add: [this.config.gmailLabels.skipped],
       remove: [this.config.gmailLabels.processing],
     });
   }

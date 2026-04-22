@@ -4,6 +4,7 @@ export interface DocumentGatewaySummary {
   messagesFailed: number;
   messagesFound: number;
   messagesProcessed: number;
+  messagesSkipped: number;
 }
 
 export interface DocumentGatewayRunResult {

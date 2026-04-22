@@ -8,7 +8,7 @@ The MVP uses Gmail labels as workflow state instead of a database:
 SDG/Process -> SDG/Processing -> SDG/Processed
                          |
                          v
-                    SDG/Failed
+              SDG/Failed or SDG/Skipped
 ```
 
 ## Current Status
@@ -130,6 +130,16 @@ curl http://localhost:3900/jobs/document-gateway/status
 ```
 
 The manual endpoint uses the same overlap guard as the scheduled job. If another run is already active, the request is skipped safely.
+
+## Message Outcomes
+
+The gateway treats labels as workflow state:
+
+- `SDG/Processed`: at least one supported attachment was uploaded to Drive.
+- `SDG/Skipped`: the email was checked, but no supported attachment produced output.
+- `SDG/Failed`: processing failed while handling a supported attachment or updating state.
+
+`SDG/Skipped` is a terminal label, so future runs ignore that message unless you remove the label and apply `SDG/Process` again.
 
 ## Useful Scripts
 

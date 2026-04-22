@@ -141,6 +141,7 @@ GMAIL_INPUT_LABEL=SDG/Process
 GMAIL_PROCESSING_LABEL=SDG/Processing
 GMAIL_PROCESSED_LABEL=SDG/Processed
 GMAIL_FAILED_LABEL=SDG/Failed
+GMAIL_SKIPPED_LABEL=SDG/Skipped
 ```
 
 ## 8. Create Gmail Labels
@@ -152,6 +153,7 @@ SDG/Process
 SDG/Processing
 SDG/Processed
 SDG/Failed
+SDG/Skipped
 ```
 
 Later, the app can create missing labels automatically.
