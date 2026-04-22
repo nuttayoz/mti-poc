@@ -10,11 +10,17 @@ import {
   GmailAttachment,
   GmailProcessableMessage,
 } from '../gmail/gmail.types';
+import {
+  DocumentGatewayRunResult,
+  DocumentGatewayStatus,
+  DocumentGatewaySummary,
+} from './document-gateway.types';
 
 @Injectable()
 export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
   private isRunning = false;
   private intervalRef?: ReturnType<typeof setInterval>;
+  private lastRun?: DocumentGatewayRunResult;
 
   constructor(
     private readonly config: AppConfigService,
@@ -53,19 +59,50 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
   }
 
   async runScheduled(): Promise<void> {
+    await this.runNow('scheduled');
+  }
+
+  async runManual(): Promise<DocumentGatewayRunResult> {
+    return this.runNow('manual');
+  }
+
+  getStatus(): DocumentGatewayStatus {
+    return {
+      intervalMs: this.config.jobIntervalMs,
+      job: 'document-gateway',
+      lastRun: this.lastRun,
+      running: this.isRunning,
+      runOnStartup: this.config.runJobOnStartup,
+    };
+  }
+
+  private async runNow(
+    trigger: 'manual' | 'scheduled',
+  ): Promise<DocumentGatewayRunResult> {
     if (this.isRunning) {
+      const skippedRun = {
+        durationMs: 0,
+        finishedAt: new Date().toISOString(),
+        job: 'document-gateway' as const,
+        skipped: true,
+        startedAt: new Date().toISOString(),
+      };
+
       this.logger.warn(
         {
           event: 'job.skipped',
           job: 'document-gateway',
           reason: 'previous_run_still_active',
+          trigger,
         },
         DocumentGatewayJob.name,
       );
-      return;
+
+      return skippedRun;
     }
 
     const startedAt = Date.now();
+    const startedAtIso = new Date(startedAt).toISOString();
     this.isRunning = true;
 
     this.logger.log(
@@ -74,44 +111,65 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
         job: 'document-gateway',
         labels: this.config.gmailLabels,
         maxMessagesPerRun: this.config.maxMessagesPerRun,
+        trigger,
       },
       DocumentGatewayJob.name,
     );
 
     try {
       const summary = await this.runGateway();
+      const result = {
+        durationMs: Date.now() - startedAt,
+        finishedAt: new Date().toISOString(),
+        job: 'document-gateway' as const,
+        skipped: false,
+        startedAt: startedAtIso,
+        summary,
+      };
 
       this.logger.log(
         {
-          durationMs: Date.now() - startedAt,
+          durationMs: result.durationMs,
           event: 'job.completed',
           job: 'document-gateway',
           summary,
+          trigger,
         },
         DocumentGatewayJob.name,
       );
+
+      this.lastRun = result;
+
+      return result;
     } catch (error) {
+      const result = {
+        durationMs: Date.now() - startedAt,
+        finishedAt: new Date().toISOString(),
+        job: 'document-gateway' as const,
+        skipped: false,
+        startedAt: startedAtIso,
+      };
+
       this.logger.error(
         {
           event: 'job.failed',
           error,
           job: 'document-gateway',
+          trigger,
         },
         undefined,
         DocumentGatewayJob.name,
       );
+
+      this.lastRun = result;
+
+      throw error;
     } finally {
       this.isRunning = false;
     }
   }
 
-  private async runGateway(): Promise<{
-    attachmentsProcessed: number;
-    attachmentsSkipped: number;
-    messagesFailed: number;
-    messagesFound: number;
-    messagesProcessed: number;
-  }> {
+  private async runGateway(): Promise<DocumentGatewaySummary> {
     const gmailReady = await this.gmailService.isReady();
     const driveReady = await this.driveService.isReady();
 

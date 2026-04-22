@@ -93,6 +93,44 @@ This file is ignored by git.
 
 Until tokens exist, the scheduled job runs safely in a dry shape: it logs that Google OAuth is not ready and skips live Gmail/Drive work.
 
+## Drive Setup
+
+With the default `drive.file` scope, the safest path is to let the app create its own destination folder:
+
+```bash
+curl -X POST http://localhost:3900/drive/setup-folder \
+  -H 'content-type: application/json' \
+  -d '{"name":"Smart Document Gateway"}'
+```
+
+Copy the returned `id` into `.env`:
+
+```text
+GOOGLE_DRIVE_DESTINATION_FOLDER_ID=...
+```
+
+Restart the app and validate:
+
+```bash
+curl http://localhost:3900/drive/folder/status
+```
+
+## Manual Gateway Runs
+
+The cron job still runs on `JOB_INTERVAL_MS`, but you can trigger a run immediately:
+
+```bash
+curl -X POST http://localhost:3900/jobs/document-gateway/run
+```
+
+Check job state:
+
+```bash
+curl http://localhost:3900/jobs/document-gateway/status
+```
+
+The manual endpoint uses the same overlap guard as the scheduled job. If another run is already active, the request is skipped safely.
+
 ## Useful Scripts
 
 ```bash

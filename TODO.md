@@ -87,12 +87,14 @@ Gmail label: SDG/Processed or SDG/Failed
 ## Phase 4: Google Drive Integration
 
 - [x] Build `DriveModule`.
-- [ ] Authenticate with Drive API.
+- [x] Authenticate with Drive API.
 - [x] Configure destination folder ID with environment variable.
 - [x] Upload a file to Google Drive.
 - [x] Set uploaded file name.
 - [x] Set uploaded file MIME type.
 - [x] Return Drive file ID and link.
+- [x] Add app-created Drive folder setup endpoint.
+- [x] Add folder validation endpoint.
 - [ ] Add folder validation during startup.
 
 ## Phase 5: Document Processing MVP
@@ -113,6 +115,8 @@ Gmail label: SDG/Processed or SDG/Failed
 
 - [x] Build `DocumentGatewayJob`.
 - [x] Run the job on a configurable interval.
+- [x] Add manual run endpoint.
+- [x] Add gateway job status endpoint.
 - [x] Limit number of messages processed per run.
 - [x] Process attachments one message at a time.
 - [x] Catch per-message errors without stopping the whole run.

@@ -5,6 +5,8 @@ import { JsonLogger } from '../common/logging/json-logger.service';
 import { AppConfigService } from '../config/app-config.service';
 import { GoogleAuthService } from '../google/google-auth.service';
 import {
+  DriveFolderCreateInput,
+  DriveFolderCreateResult,
   DriveFolderStatus,
   DriveUploadInput,
   DriveUploadResult,
@@ -61,7 +63,40 @@ export class DriveService {
         response.data.trashed !== true,
       folderId,
       name: response.data.name ?? undefined,
+      webViewLink: response.data.webViewLink ?? undefined,
     };
+  }
+
+  async createDestinationFolder(
+    input: DriveFolderCreateInput = {},
+  ): Promise<DriveFolderCreateResult> {
+    const drive = await this.getClient();
+    const response = await drive.files.create({
+      fields: 'id,name,webViewLink',
+      requestBody: {
+        mimeType: 'application/vnd.google-apps.folder',
+        name: input.name?.trim() || 'Smart Document Gateway',
+      },
+      supportsAllDrives: true,
+    });
+
+    const result = {
+      id: response.data.id ?? '',
+      name: response.data.name ?? input.name ?? 'Smart Document Gateway',
+      webViewLink: response.data.webViewLink ?? undefined,
+    };
+
+    this.logger.log(
+      {
+        event: 'drive.folder_created',
+        folderId: result.id,
+        folderName: result.name,
+        webViewLink: result.webViewLink,
+      },
+      DriveService.name,
+    );
+
+    return result;
   }
 
   async uploadFile(input: DriveUploadInput): Promise<DriveUploadResult> {

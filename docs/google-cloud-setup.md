@@ -79,7 +79,29 @@ After creating the client, copy:
 
 ## 6. Create Google Drive Destination Folder
 
-In Google Drive:
+Recommended MVP path:
+
+1. Complete Google OAuth first.
+2. Start the app.
+3. Let the app create the folder:
+
+```bash
+curl -X POST http://localhost:3900/drive/setup-folder \
+  -H 'content-type: application/json' \
+  -d '{"name":"Smart Document Gateway"}'
+```
+
+4. Copy the returned `id` into `GOOGLE_DRIVE_DESTINATION_FOLDER_ID`.
+5. Restart the app.
+6. Validate the folder:
+
+```bash
+curl http://localhost:3900/drive/folder/status
+```
+
+This works well with the narrow `drive.file` scope because the folder is created by the app.
+
+Alternative manual path:
 
 1. Create a folder for processed documents.
 2. Suggested folder name: `Smart Document Gateway`.
@@ -91,6 +113,8 @@ Example URL shape:
 ```text
 https://drive.google.com/drive/folders/FOLDER_ID_IS_HERE
 ```
+
+Manual folders might not be visible with the `drive.file` scope unless the app has explicit per-file access. If a manual folder returns `404 File not found`, use the recommended app-created folder path above.
 
 ## 7. Create Local `.env`
 
