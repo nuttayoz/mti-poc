@@ -179,6 +179,16 @@ bun run start:dev    # run compiled dist/main.js with Bun watch mode
 bun run typecheck    # run TypeScript without emitting files
 ```
 
+## Docker
+
+Build and run with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+See [docs/docker-deployment.md](docs/docker-deployment.md) for OAuth redirect URI, token volume, and Drive folder setup details.
+
 NestJS uses legacy TypeScript decorator metadata, so this project compiles with `tsc` before Bun runs the compiled JavaScript.
 
 For local development with rebuilds, use two terminals:
