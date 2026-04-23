@@ -10,6 +10,20 @@ export class AppConfigService {
     return this.numberFromEnv('PORT', 3000);
   }
 
+  get logFormat(): 'json' | 'pretty' {
+    const format = process.env.LOG_FORMAT ?? 'pretty';
+
+    if (format === 'json' || format === 'pretty') {
+      return format;
+    }
+
+    return 'pretty';
+  }
+
+  get logColors(): boolean {
+    return this.booleanFromEnv('LOG_COLORS', true);
+  }
+
   get jobIntervalMs(): number {
     return this.numberFromEnv('JOB_INTERVAL_MS', 300_000);
   }
@@ -26,17 +40,39 @@ export class AppConfigService {
     return this.booleanFromEnv('ARCHIVE_AFTER_SUCCESS', true);
   }
 
+  get documentProcessorMode(): 'mock-external' | 'passthrough' {
+    const mode = process.env.DOCUMENT_PROCESSOR_MODE ?? 'mock-external';
+
+    if (mode === 'passthrough' || mode === 'mock-external') {
+      return mode;
+    }
+
+    return 'mock-external';
+  }
+
+  get externalTransformApi(): {
+    apiKey: string;
+    url: string;
+  } {
+    return {
+      apiKey: process.env.EXTERNAL_TRANSFORM_API_KEY ?? '',
+      url: process.env.EXTERNAL_TRANSFORM_API_URL ?? '',
+    };
+  }
+
   get gmailLabels(): {
     input: string;
-    processing: string;
-    processed: string;
     failed: string;
+    processed: string;
+    processing: string;
+    skipped: string;
   } {
     return {
       input: process.env.GMAIL_INPUT_LABEL ?? 'SDG/Process',
-      processing: process.env.GMAIL_PROCESSING_LABEL ?? 'SDG/Processing',
-      processed: process.env.GMAIL_PROCESSED_LABEL ?? 'SDG/Processed',
       failed: process.env.GMAIL_FAILED_LABEL ?? 'SDG/Failed',
+      processed: process.env.GMAIL_PROCESSED_LABEL ?? 'SDG/Processed',
+      processing: process.env.GMAIL_PROCESSING_LABEL ?? 'SDG/Processing',
+      skipped: process.env.GMAIL_SKIPPED_LABEL ?? 'SDG/Skipped',
     };
   }
 

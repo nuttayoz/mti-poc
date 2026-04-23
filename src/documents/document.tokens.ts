@@ -1,0 +1,1 @@
+export const DOCUMENT_PROCESSOR = Symbol('DOCUMENT_PROCESSOR');

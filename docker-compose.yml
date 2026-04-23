@@ -1,0 +1,19 @@
+services:
+  smart-document-gateway:
+    build:
+      context: .
+    container_name: smart-document-gateway
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3900
+      GOOGLE_TOKEN_STORAGE_PATH: /app/.tokens/google-oauth.json
+    ports:
+      - "3900:3900"
+    volumes:
+      - sdg_tokens:/app/.tokens
+    restart: unless-stopped
+
+volumes:
+  sdg_tokens:

@@ -79,7 +79,29 @@ After creating the client, copy:
 
 ## 6. Create Google Drive Destination Folder
 
-In Google Drive:
+Recommended MVP path:
+
+1. Complete Google OAuth first.
+2. Start the app.
+3. Let the app create the folder:
+
+```bash
+curl -X POST http://localhost:3900/drive/setup-folder \
+  -H 'content-type: application/json' \
+  -d '{"name":"Smart Document Gateway"}'
+```
+
+4. Copy the returned `id` into `GOOGLE_DRIVE_DESTINATION_FOLDER_ID`.
+5. Restart the app.
+6. Validate the folder:
+
+```bash
+curl http://localhost:3900/drive/folder/status
+```
+
+This works well with the narrow `drive.file` scope because the folder is created by the app.
+
+Alternative manual path:
 
 1. Create a folder for processed documents.
 2. Suggested folder name: `Smart Document Gateway`.
@@ -91,6 +113,8 @@ Example URL shape:
 ```text
 https://drive.google.com/drive/folders/FOLDER_ID_IS_HERE
 ```
+
+Manual folders might not be visible with the `drive.file` scope unless the app has explicit per-file access. If a manual folder returns `404 File not found`, use the recommended app-created folder path above.
 
 ## 7. Create Local `.env`
 
@@ -117,6 +141,7 @@ GMAIL_INPUT_LABEL=SDG/Process
 GMAIL_PROCESSING_LABEL=SDG/Processing
 GMAIL_PROCESSED_LABEL=SDG/Processed
 GMAIL_FAILED_LABEL=SDG/Failed
+GMAIL_SKIPPED_LABEL=SDG/Skipped
 ```
 
 ## 8. Create Gmail Labels
@@ -128,6 +153,7 @@ SDG/Process
 SDG/Processing
 SDG/Processed
 SDG/Failed
+SDG/Skipped
 ```
 
 Later, the app can create missing labels automatically.
@@ -150,6 +176,94 @@ Later, the app can create missing labels automatically.
 - [ ] Drive destination folder is created.
 - [ ] Drive folder ID is copied into `.env`.
 - [ ] Gmail labels are created.
+
+## 10. Authorize the Local App
+
+After `.env` is filled in, build and start the service:
+
+```bash
+bun run build
+bun run start
+```
+
+The app must run on the same port used in the OAuth redirect URI. With the default setup, that is port `3000`.
+
+Check OAuth status:
+
+```bash
+curl http://localhost:3000/oauth/google/status
+```
+
+Start OAuth in your browser:
+
+```text
+http://localhost:3000/oauth/google/start
+```
+
+Google will redirect back to:
+
+```text
+http://localhost:3000/oauth/google/callback
+```
+
+After a successful callback, the app stores tokens at:
+
+```text
+.tokens/google-oauth.json
+```
+
+Expected status after authorization:
+
+```json
+{
+  "configured": true,
+  "driveFolderConfigured": true,
+  "hasRefreshToken": true,
+  "tokenStored": true
+}
+```
+
+The response also includes the configured scopes and token storage path.
+
+If Google returns `redirect_uri_mismatch`, update either the Google Cloud OAuth client redirect URI or `GOOGLE_OAUTH_REDIRECT_URI` so they match exactly.
+
+## 11. Switch Target Mailbox
+
+The current MVP stores one OAuth token:
+
+```text
+.tokens/google-oauth.json
+```
+
+The authenticated account represented by that file is the target Gmail mailbox and Drive account.
+
+To switch to a different target mailbox:
+
+1. Reset the stored token:
+
+```bash
+curl -X POST http://localhost:3900/oauth/google/reset
+```
+
+2. Authorize again:
+
+```text
+http://localhost:3900/oauth/google/start
+```
+
+3. Sign in as the new target mailbox.
+4. Create a new app-owned Drive folder for that account:
+
+```bash
+curl -X POST http://localhost:3900/drive/setup-folder \
+  -H 'content-type: application/json' \
+  -d '{"name":"Smart Document Gateway"}'
+```
+
+5. Copy the returned `id` into `GOOGLE_DRIVE_DESTINATION_FOLDER_ID`.
+6. Restart the app.
+
+Resetting OAuth does not delete the old Drive folder or files. With the default `drive.file` scope, a new target account should create its own app-owned folder.
 
 ## Official References
 
