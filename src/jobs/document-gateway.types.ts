@@ -23,3 +23,10 @@ export interface DocumentGatewayStatus {
   running: boolean;
   runOnStartup: boolean;
 }
+
+export interface DocumentGatewayRecoveryResult {
+  job: 'document-gateway';
+  recovered: number;
+  recoveredMessageIds: string[];
+  skipped: boolean;
+}

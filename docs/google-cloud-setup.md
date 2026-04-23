@@ -227,6 +227,44 @@ The response also includes the configured scopes and token storage path.
 
 If Google returns `redirect_uri_mismatch`, update either the Google Cloud OAuth client redirect URI or `GOOGLE_OAUTH_REDIRECT_URI` so they match exactly.
 
+## 11. Switch Target Mailbox
+
+The current MVP stores one OAuth token:
+
+```text
+.tokens/google-oauth.json
+```
+
+The authenticated account represented by that file is the target Gmail mailbox and Drive account.
+
+To switch to a different target mailbox:
+
+1. Reset the stored token:
+
+```bash
+curl -X POST http://localhost:3900/oauth/google/reset
+```
+
+2. Authorize again:
+
+```text
+http://localhost:3900/oauth/google/start
+```
+
+3. Sign in as the new target mailbox.
+4. Create a new app-owned Drive folder for that account:
+
+```bash
+curl -X POST http://localhost:3900/drive/setup-folder \
+  -H 'content-type: application/json' \
+  -d '{"name":"Smart Document Gateway"}'
+```
+
+5. Copy the returned `id` into `GOOGLE_DRIVE_DESTINATION_FOLDER_ID`.
+6. Restart the app.
+
+Resetting OAuth does not delete the old Drive folder or files. With the default `drive.file` scope, a new target account should create its own app-owned folder.
+
 ## Official References
 
 - Gmail API Node.js quickstart: https://developers.google.com/workspace/gmail/api/quickstart/nodejs

@@ -9,6 +9,7 @@ import {
   GmailLabelSet,
   GmailMessageSummary,
   GmailProcessableMessage,
+  GmailRecoveredMessage,
 } from './gmail.types';
 
 @Injectable()
@@ -145,6 +146,65 @@ export class GmailService {
       add: [this.config.gmailLabels.processing],
       remove: [this.config.gmailLabels.input],
     });
+  }
+
+  async recoverProcessingMessages(): Promise<GmailRecoveredMessage[]> {
+    if (!(await this.isReady())) {
+      this.logger.warn(
+        {
+          event: 'gmail.recovery_skipped',
+          reason: 'google_oauth_tokens_missing',
+        },
+        GmailService.name,
+      );
+      return [];
+    }
+
+    const gmail = await this.getClient();
+    const labels = this.config.gmailLabels;
+    const processingLabelId = await this.getLabelId(gmail, labels.processing);
+
+    if (!processingLabelId) {
+      this.logger.warn(
+        {
+          event: 'gmail.recovery_skipped',
+          labelName: labels.processing,
+          reason: 'processing_label_missing',
+        },
+        GmailService.name,
+      );
+      return [];
+    }
+
+    const response = await gmail.users.messages.list({
+      labelIds: [processingLabelId],
+      maxResults: this.config.maxMessagesPerRun,
+      userId: 'me',
+    });
+
+    const messages = (response.data.messages ?? [])
+      .filter((message) => Boolean(message.id))
+      .map((message) => ({
+        id: message.id ?? '',
+        threadId: message.threadId ?? undefined,
+      }));
+
+    for (const message of messages) {
+      await this.replaceLabels(message.id, {
+        add: [labels.input],
+        remove: [labels.processing],
+      });
+
+      this.logger.log(
+        {
+          event: 'gmail.message_recovered',
+          messageId: message.id,
+        },
+        GmailService.name,
+      );
+    }
+
+    return messages;
   }
 
   async moveToProcessed(messageId: string): Promise<void> {

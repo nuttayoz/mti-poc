@@ -12,6 +12,11 @@ export interface GmailMessageSummary {
   threadId?: string;
 }
 
+export interface GmailRecoveredMessage {
+  id: string;
+  threadId?: string;
+}
+
 export interface GmailAttachment {
   attachmentId: string;
   filename: string;

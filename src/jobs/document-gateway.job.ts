@@ -12,6 +12,7 @@ import {
 } from '../gmail/gmail.types';
 import {
   DocumentGatewayRunResult,
+  DocumentGatewayRecoveryResult,
   DocumentGatewayStatus,
   DocumentGatewaySummary,
 } from './document-gateway.types';
@@ -64,6 +65,46 @@ export class DocumentGatewayJob implements OnModuleInit, OnModuleDestroy {
 
   async runManual(): Promise<DocumentGatewayRunResult> {
     return this.runNow('manual');
+  }
+
+  async recoverStuck(): Promise<DocumentGatewayRecoveryResult> {
+    if (this.isRunning) {
+      this.logger.warn(
+        {
+          event: 'job.recovery_skipped',
+          job: 'document-gateway',
+          reason: 'run_still_active',
+        },
+        DocumentGatewayJob.name,
+      );
+
+      return {
+        job: 'document-gateway',
+        recovered: 0,
+        recoveredMessageIds: [],
+        skipped: true,
+      };
+    }
+
+    const recoveredMessages =
+      await this.gmailService.recoverProcessingMessages();
+    const result = {
+      job: 'document-gateway' as const,
+      recovered: recoveredMessages.length,
+      recoveredMessageIds: recoveredMessages.map((message) => message.id),
+      skipped: false,
+    };
+
+    this.logger.log(
+      {
+        event: 'job.recovery_completed',
+        job: 'document-gateway',
+        recovered: result.recovered,
+      },
+      DocumentGatewayJob.name,
+    );
+
+    return result;
   }
 
   getStatus(): DocumentGatewayStatus {

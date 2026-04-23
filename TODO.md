@@ -56,6 +56,7 @@ Gmail label: SDG/Processed or SDG/Failed
 - [x] Add required Gmail scopes.
 - [x] Add required Drive scopes.
 - [x] Add Google OAuth endpoints.
+- [x] Add OAuth token reset endpoint.
 - [x] Create Gmail labels:
   - [x] `SDG/Process`
   - [x] `SDG/Processing`
@@ -133,8 +134,8 @@ Gmail label: SDG/Processed or SDG/Failed
 ## Phase 7: Reliability Without a Database
 
 - [x] Use Gmail labels as state transitions.
-- [ ] Treat `SDG/Processing` messages as recoverable stuck work.
-- [ ] Add a manual recovery command or endpoint for stuck messages.
+- [x] Treat `SDG/Processing` messages as recoverable stuck work.
+- [x] Add a manual recovery command or endpoint for stuck messages.
 - [x] Make upload filenames deterministic where possible.
 - [x] Include Gmail message ID in Drive file metadata or description.
 - [x] Avoid logging attachment contents or sensitive document text.

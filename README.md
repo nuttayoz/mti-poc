@@ -93,6 +93,22 @@ This file is ignored by git.
 
 Until tokens exist, the scheduled job runs safely in a dry shape: it logs that Google OAuth is not ready and skips live Gmail/Drive work.
 
+To switch the target mailbox, reset the stored OAuth token:
+
+```bash
+curl -X POST http://localhost:3900/oauth/google/reset
+```
+
+or:
+
+```bash
+curl -X DELETE http://localhost:3900/oauth/google/token
+```
+
+Then open `/oauth/google/start` again and sign in as the new target mailbox.
+
+Resetting OAuth only deletes the local token file. It does not delete any Gmail labels, processed Drive files, or Drive folders.
+
 ## Drive Setup
 
 With the default `drive.file` scope, the safest path is to let the app create its own destination folder:
@@ -115,6 +131,8 @@ Restart the app and validate:
 curl http://localhost:3900/drive/folder/status
 ```
 
+If you switch OAuth to a different target account, create a new app-owned Drive folder for that account and update `GOOGLE_DRIVE_DESTINATION_FOLDER_ID`. The old folder remains in the old account's Drive.
+
 ## Manual Gateway Runs
 
 The cron job still runs on `JOB_INTERVAL_MS`, but you can trigger a run immediately:
@@ -131,6 +149,14 @@ curl http://localhost:3900/jobs/document-gateway/status
 
 The manual endpoint uses the same overlap guard as the scheduled job. If another run is already active, the request is skipped safely.
 
+Recover stuck messages:
+
+```bash
+curl -X POST http://localhost:3900/jobs/document-gateway/recover-stuck
+```
+
+This moves messages from `SDG/Processing` back to `SDG/Process` so a later run can retry them.
+
 ## Message Outcomes
 
 The gateway treats labels as workflow state:
@@ -140,6 +166,8 @@ The gateway treats labels as workflow state:
 - `SDG/Failed`: processing failed while handling a supported attachment or updating state.
 
 `SDG/Skipped` is a terminal label, so future runs ignore that message unless you remove the label and apply `SDG/Process` again.
+
+If an app crash or network failure leaves an email in `SDG/Processing`, use the recovery endpoint above to make it eligible again.
 
 ## Useful Scripts
 

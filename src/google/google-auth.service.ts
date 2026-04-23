@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { google } from 'googleapis';
 import type { Auth } from 'googleapis';
-import { mkdir, readFile, writeFile, chmod } from 'node:fs/promises';
+import { chmod, mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { JsonLogger } from '../common/logging/json-logger.service';
 import { AppConfigService } from '../config/app-config.service';
@@ -15,6 +15,12 @@ export interface GoogleOAuthStatus {
   scopes: readonly string[];
   tokenStoragePath: string;
   tokenStored: boolean;
+}
+
+export interface GoogleOAuthResetResult {
+  deleted: boolean;
+  status: GoogleOAuthStatus;
+  tokenStoragePath: string;
 }
 
 export class GoogleAuthConfigurationError extends Error {
@@ -92,6 +98,35 @@ export class GoogleAuthService {
       scopes: GOOGLE_OAUTH_SCOPES,
       tokenStoragePath: this.config.googleOAuth.tokenStoragePath,
       tokenStored: Boolean(tokens),
+    };
+  }
+
+  async resetStoredToken(): Promise<GoogleOAuthResetResult> {
+    const tokenPath = this.getAbsoluteTokenPath();
+    let deleted = false;
+
+    try {
+      await unlink(tokenPath);
+      deleted = true;
+    } catch (error) {
+      if (!this.isFileNotFoundError(error)) {
+        throw error;
+      }
+    }
+
+    this.logger.warn(
+      {
+        deleted,
+        event: 'google.oauth.tokens_reset',
+        tokenStoragePath: this.config.googleOAuth.tokenStoragePath,
+      },
+      GoogleAuthService.name,
+    );
+
+    return {
+      deleted,
+      status: await this.getStatus(),
+      tokenStoragePath: this.config.googleOAuth.tokenStoragePath,
     };
   }
 

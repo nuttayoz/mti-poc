@@ -1,13 +1,16 @@
 import {
   BadRequestException,
   Controller,
+  Delete,
   Get,
+  Post,
   Query,
   Redirect,
 } from '@nestjs/common';
 import {
   GoogleAuthConfigurationError,
   GoogleAuthService,
+  GoogleOAuthResetResult,
   GoogleOAuthStatus,
 } from './google-auth.service';
 
@@ -62,6 +65,16 @@ export class GoogleOAuthController {
   @Get('status')
   getStatus(): Promise<GoogleOAuthStatus> {
     return this.googleAuthService.getStatus();
+  }
+
+  @Delete('token')
+  resetToken(): Promise<GoogleOAuthResetResult> {
+    return this.googleAuthService.resetStoredToken();
+  }
+
+  @Post('reset')
+  resetOAuth(): Promise<GoogleOAuthResetResult> {
+    return this.googleAuthService.resetStoredToken();
   }
 
   private toBadRequest(error: unknown): BadRequestException {
